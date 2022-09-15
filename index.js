@@ -41,6 +41,8 @@ async function createAnnotation(linterOutput) {
         ],
       },
     })
+
+    core.setFailed(`Errors encountered when linting: ${linterOutput.uri}`)
   }
 }
 
