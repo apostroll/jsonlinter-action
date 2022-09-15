@@ -46,7 +46,7 @@ async function createAnnotations(linterOutputs) {
     })
 
     core.setFailed(
-      `${annotations.length} errors encountered when running jsonlinter-action.`
+      `${annotations.length} errors encountered while linting JSON files.`
     )
   }
 }
