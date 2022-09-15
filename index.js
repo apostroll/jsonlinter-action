@@ -21,8 +21,8 @@ function createAnnotations(linterOutputs) {
         end_line: diagnostic.range.end.line,
         message: diagnostic.message,
         start_column: diagnostic.range.start.character,
-        annotation_level: 'failure',
         end_column: diagnostic.range.end.character,
+        annotation_level: 'failure',
       })
     }
   }
@@ -106,12 +106,17 @@ async function lintFiles(filenames) {
 
   const annotations = createAnnotations(results)
 
-  core.debug('Creating annotations.')
 
   if (annotations.length) {
+    core.setFailed(
+      `${annotations.length} errors encountered while linting JSON files.`
+    )
+
+    core.debug('Creating annotations.')
+
     const token = core.getInput('repo-token')
     const octokit = new github.getOctokit(token)
-    await octokit.rest.checks.create({
+    const check = await octokit.rest.checks.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       name: 'jsonlinter-action',
@@ -122,12 +127,8 @@ async function lintFiles(filenames) {
         title: 'jsonlinter-action: output',
         summary: `${annotations.length} annotations written.`,
         annotations: annotations,
-      }
+      },
     })
-
-    core.setFailed(
-      `${annotations.length} errors encountered while linting JSON files.`
-    )
   }
 }
 
