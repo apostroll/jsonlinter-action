@@ -131,9 +131,9 @@ async function lintFiles(filenames) {
       },
     })
 
-    // core.setFailed(
-    //   `${annotations.length} errors encountered while linting JSON files.`
-    // )
+    core.setFailed(
+      `${annotations.length} errors encountered while linting JSON files.`
+    )
   } else {
     await octokit.rest.checks.update({
       owner: github.context.repo.owner,
