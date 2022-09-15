@@ -10,6 +10,7 @@ async function createAnnotation(linterOutput) {
   const octokit = new github.getOctokit(token)
 
   if (linterOutput.diagnostics.length === 0) {
+    core.notice(`${filename} found no errors!`)
     return
   }
 
@@ -70,6 +71,7 @@ async function lintFiles(filenames) {
   const client = await initializeLSPClient()
 
   for (const filename of filenames) {
+    core.notice(`Linting ${filename}...`)
     const contents = await fs.readFile(filename, 'utf8')
 
     client.didOpen({
