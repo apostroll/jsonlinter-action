@@ -14,7 +14,9 @@ async function createAnnotation(linterOutput) {
     return
   }
 
-  core.debug(`${linterOutput.uri} has: {linterOutput.diagnostics.length} errors!`)
+  core.debug(
+    `${linterOutput.uri} has: {linterOutput.diagnostics.length} errors!`
+  )
   for (diagnostic of linterOutput.diagnostics) {
     core.debug(
       `${linterOutput.uri}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
@@ -36,6 +38,7 @@ async function createAnnotation(linterOutput) {
             end_line: diagnostic.range.end.line,
             message: diagnostic.message,
             start_column: diagnostic.range.start.character,
+            annotation_level: 'notice',
             end_column: diagnostic.range.end.character,
           },
         ],
