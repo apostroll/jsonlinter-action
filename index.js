@@ -114,7 +114,7 @@ async function lintFiles(filenames) {
     const result = await client.once('textDocument/publishDiagnostics')
 
     core.debug(`Languageserver client responded for ${filename}.`)
-    results.concat(result)
+    results = results.concat(result)
 
     client.didClose({
       uri: filename,
