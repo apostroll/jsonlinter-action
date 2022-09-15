@@ -50,7 +50,7 @@ async function createAnnotation(linterOutput) {
 async function initializeLSPClient() {
   core.debug('Initializing vscode-json-languageserver')
   const lspProcess = await exec.exec('node', [
-    'node_modules/vscode-json-languageserver/bin/vscode-json-languageserver',
+    'node_modules/jsonlinter-action/node_modules/vscode-json-languageserver/bin/vscode-json-languageserver',
     '--stdio',
   ])
 
