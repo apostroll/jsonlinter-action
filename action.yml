@@ -1,0 +1,15 @@
+name: "JSON linter action"
+description: "Lint JSON files using vscode-json-languageserver"
+runs:
+  using: node12
+  main: index.js
+inputs:
+  repo-token:
+    type: String
+    description: "Github token"
+    required: true
+    default: ${{github.token}}
+  files:
+    type: String
+    description: "List of files to check, comma separated"
+    required: true
