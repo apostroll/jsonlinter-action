@@ -70,7 +70,7 @@ async function initializeLSPClient() {
     ],
   })
 
-  core.notice(iDontReallyCare)
+  core.notice(JSON.stringify(iDontReallyCare))
 
   core.notice('Languageserver client initialized.')
   return client
