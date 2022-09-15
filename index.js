@@ -7,7 +7,6 @@ const path = require('node:path')
 const fs = require('fs/promises')
 
 function createAnnotations(linterOutputs) {
-
   annotations = []
   core.debug(linterOutputs)
   for (const linterOutput of linterOutputs) {
@@ -28,7 +27,7 @@ function createAnnotations(linterOutputs) {
     }
   }
 
-  return annotations;
+  return annotations
 }
 
 async function initializeLSPClient() {
@@ -74,16 +73,6 @@ async function lintFiles(filenames) {
 
   core.debug(`Start linting: ${filenames}`)
 
-  const token = core.getInput('repo-token')
-  const octokit = new github.getOctokit(token)
-  const check = await octokit.rest.checks.create({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    name: 'jsonlinter-action',
-    head_sha: github.context.sha,
-    status: 'in_progress',
-  })
-
   let results = []
   for (const filename of filenames) {
     core.debug(`Linting ${filename}...`)
@@ -120,11 +109,12 @@ async function lintFiles(filenames) {
   core.debug('Creating annotations.')
 
   if (annotations.length) {
-    await octokit.rest.checks.update({
+    const token = core.getInput('repo-token')
+    const octokit = new github.getOctokit(token)
+    await octokit.rest.checks.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      check_run_id: check.data.id,
-      name: check.data.name,
+      name: 'jsonlinter-action',
       head_sha: github.context.sha,
       status: 'completed',
       conclusion: 'failure',
@@ -138,7 +128,6 @@ async function lintFiles(filenames) {
     core.setFailed(
       `${annotations.length} errors encountered while linting JSON files.`
     )
-    return false
   } else {
     await octokit.rest.checks.update({
       owner: github.context.repo.owner,
@@ -154,8 +143,6 @@ async function lintFiles(filenames) {
         annotations: annotations,
       },
     })
-
-    return true
   }
 }
 
@@ -166,7 +153,7 @@ async function lintFiles(filenames) {
       .getInput('files')
       .split(',')
       .map((f) => f.trim())
-    return await lintFiles(files)
+    await lintFiles(files)
   } catch (error) {
     core.setFailed(error.message)
   }
