@@ -105,7 +105,7 @@ async function lintFiles(filenames) {
       .getInput('files')
       .split(',')
       .map((f) => f.trim())
-    lintFiles(files)
+    await lintFiles(files)
   } catch (error) {
     core.setFailed(error.message)
   }
