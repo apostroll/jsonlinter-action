@@ -4,6 +4,7 @@ const lspClient = require('ts-lsp-client')
 const child_process = require('child_process')
 const process = require('node:process')
 const fs = require('fs/promises')
+const path = require('path');
 
 async function createAnnotation(linterOutput) {
   const token = core.getInput('repo-token')
@@ -72,7 +73,9 @@ async function lintFiles(filenames) {
 
   for (const filename of filenames) {
     core.notice(`Linting ${filename}...`)
-    const contents = await fs.readFile(filename, 'utf8')
+	project_path = process.env('GITHUB_WORKSPACE')
+	full_path = path.join(project_path, filename)
+    const contents = await fs.readFile(full_path, 'utf8')
 
     client.didOpen({
       textDocument: {
