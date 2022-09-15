@@ -10,14 +10,14 @@ async function createAnnotation(linterOutput) {
   const octokit = new github.getOctokit(token)
 
   if (linterOutput.diagnostics.length === 0) {
-    core.debug(`${diagnostic.uri} found no errors!`)
+    core.debug(`${linterOutput.uri} found no errors!`)
     return
   }
 
-  core.debug(`${diagnostic.uri} has: {linterOutput.diagnostics.length} errors!`)
+  core.debug(`${linterOutput.uri} has: {linterOutput.diagnostics.length} errors!`)
   for (diagnostic of linterOutput.diagnostics) {
     core.debug(
-      `${diagnostic.uri}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
+      `${linterOutput.uri}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
     )
     await octokit.rest.checks.create({
       owner: github.context.repo.owner,
