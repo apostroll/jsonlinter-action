@@ -16,7 +16,9 @@ async function createAnnotation(linterOutput) {
 
   core.notice(`${filename} has: {linterOutput.diagnostics.length} errors!`)
   for (diagnostic of linterOutput.diagnostics) {
-    core.notice(`${filename}: ${diagnostic.message} line: ${diagnostic.range.start.line}`)
+    core.notice(
+      `${filename}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
+    )
     await octokit.rest.checks.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
@@ -43,6 +45,7 @@ async function createAnnotation(linterOutput) {
 }
 
 async function initializeLSPClient() {
+  core.notice('Initializing vscode-json-languageserver')
   const lspProcess = child_process.spawn('node', [
     'node_modules/vscode-json-languageserver/bin/vscode-json-languageserver',
     '--stdio',
@@ -54,6 +57,7 @@ async function initializeLSPClient() {
   )
   const client = new lspClient.LspClient(endpoint)
 
+  core.notice('Initializing languageserver client')
   await client.initialize({
     processId: process.pid,
     capabilities: {},
