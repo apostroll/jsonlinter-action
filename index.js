@@ -58,7 +58,7 @@ async function initializeLSPClient() {
   const client = new lspClient.LspClient(endpoint)
 
   core.notice('Initializing languageserver client')
-  await client.initialize({
+  const iDontReallyCare = await client.initialize({
     processId: process.pid,
     capabilities: {},
     client: 'jsonlinter-action',
@@ -69,6 +69,8 @@ async function initializeLSPClient() {
       },
     ],
   })
+
+  core.notice(iDontReallyCare)
 
   core.notice('Languageserver client initialized.')
   return client
