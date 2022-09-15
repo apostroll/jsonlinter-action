@@ -11,6 +11,7 @@ async function createAnnotations(linterOutputs) {
   const octokit = new github.getOctokit(token)
 
   annotations = []
+  core.debug(linterOutputs)
   for (const linterOutput of linterOutputs) {
     core.debug(`Iterating errors returned for: ${linterOutput.uri}`)
 
