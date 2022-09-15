@@ -13,7 +13,7 @@ function createAnnotations(linterOutputs) {
     core.debug(`Iterating errors returned for: ${linterOutput.uri}`)
 
     for (const diagnostic of linterOutput.diagnostics) {
-      core.debug(`${linterOutput.uri}: diagnostic: ${diagnostic}`)
+      core.debug(`${linterOutput.uri}: diagnostic: ${JSON.stringify(diagnostic)}`)
 
       const annotation = {
         path: linterOutput.uri,
@@ -25,7 +25,7 @@ function createAnnotations(linterOutputs) {
         annotation_level: 'failure',
       }
 
-      core.debug(`${linterOutput.uri}: annotation: ${annotation}`)
+      core.debug(`${linterOutput.uri}: annotation: ${JSON.stringify(annotation)}`)
       annotations.push(annotation)
     }
   }
