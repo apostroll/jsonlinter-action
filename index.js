@@ -14,7 +14,9 @@ async function createAnnotation(linterOutput) {
     return
   }
 
+  core.notice(`${filename} has: {linterOutput.diagnostics.length} errors!`)
   for (diagnostic of linterOutput.diagnostics) {
+    core.notice(`${filename}: ${diagnostic.message} line: ${diagnostic.range.start.line}`)
     await octokit.rest.checks.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
