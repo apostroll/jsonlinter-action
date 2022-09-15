@@ -98,6 +98,7 @@ async function lintFiles(filenames) {
 ;(async () => {
   try {
     core.notice('Running jsonlinter-action')
+    core.notice(`Files found: ${core.getInput('files')}`)
     const files = core
       .getInput('files')
       .split(',')
