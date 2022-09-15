@@ -6,9 +6,7 @@ const process = require('node:process')
 const path = require('node:path')
 const fs = require('fs/promises')
 
-async function createAnnotations(linterOutputs) {
-  const token = core.getInput('repo-token')
-  const octokit = new github.getOctokit(token)
+function createAnnotations(linterOutputs) {
 
   annotations = []
   core.debug(linterOutputs)
@@ -24,31 +22,13 @@ async function createAnnotations(linterOutputs) {
         end_line: diagnostic.range.end.line,
         message: diagnostic.message,
         start_column: diagnostic.range.start.character,
-        annotation_level: 'notice',
+        annotation_level: 'failure',
         end_column: diagnostic.range.end.character,
       })
     }
   }
 
-  if (annotations.length) {
-    await octokit.rest.checks.create({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      name: 'jsonlinter-action',
-      head_sha: github.context.sha,
-      status: 'completed',
-      conclusion: 'failure',
-      output: {
-        title: 'Error linting JSON files',
-        summary: '',
-        annotations: annotations,
-      },
-    })
-
-    core.setFailed(
-      `${annotations.length} errors encountered while linting JSON files.`
-    )
-  }
+  return annotations;
 }
 
 async function initializeLSPClient() {
@@ -94,6 +74,16 @@ async function lintFiles(filenames) {
 
   core.debug(`Start linting: ${filenames}`)
 
+  const token = core.getInput('repo-token')
+  const octokit = new github.getOctokit(token)
+  const check = await octokit.rest.checks.create({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    name: 'jsonlinter-action',
+    head_sha: github.context.sha,
+    status: 'in_progress',
+  })
+
   let results = []
   for (const filename of filenames) {
     core.debug(`Linting ${filename}...`)
@@ -121,8 +111,45 @@ async function lintFiles(filenames) {
     })
   }
 
+  const annotations = createAnnotations(results)
+
   core.debug('Creating annotations.')
-  await createAnnotations(results)
+
+  if (annotations.length) {
+    await octokit.rest.checks.update({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      check_run_id: check.data.id,
+      name: check.data.name,
+      head_sha: github.context.sha,
+      status: 'completed',
+      conclusion: 'failure',
+      output: {
+        title: `${check.data.name}: output`,
+        summary: `${annotations.length} annotations written.`,
+        annotations: annotations,
+      },
+    })
+
+    core.setFailed(
+      `${annotations.length} errors encountered while linting JSON files.`
+    )
+  } else {
+    await octokit.rest.checks.update({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      check_run_id: check.data.id,
+      name: check.data.name,
+      head_sha: github.context.sha,
+      status: 'completed',
+      conclusion: 'success',
+      output: {
+        title: `${check.data.name}: output`,
+        summary: `${annotations.length} annotations written.`,
+        annotations: annotations,
+      },
+    })
+  }
 
   core.debug('Shutting down languageserver.')
   client.shutdown()
