@@ -3,6 +3,7 @@ const github = require('@actions/github')
 const lspClient = require('ts-lsp-client')
 const child_process = require('child_process')
 const process = require('node:process')
+const path = require('node:path')
 const fs = require('fs/promises')
 
 async function createAnnotations(linterOutputs) {
@@ -11,7 +12,11 @@ async function createAnnotations(linterOutputs) {
 
   annotations = []
   for (const linterOutput of linterOutputs) {
+    core.debug(`Iterating errors returned for: ${linterOutput.uri}`)
+
     for (const diagnostic of linterOutput.diagnostics) {
+      core.debug(`${linterOutput.uri}: diagnostic: ${diagnostic}`)
+
       annotations.push({
         path: linterOutput.uri,
         start_line: diagnostic.range.start.line,
@@ -38,14 +43,24 @@ async function createAnnotations(linterOutputs) {
         annotations: annotations,
       },
     })
-    core.setFailed(`${annotations.length} errors encountered when linting`)
+
+    core.setFailed(
+      `${annotations.length} errors encountered when running jsonlinter-action.`
+    )
   }
 }
 
 async function initializeLSPClient() {
   core.debug('Initializing vscode-json-languageserver')
+
   const lspProcess = child_process.spawn('node', [
-    `${__dirname}/node_modules/vscode-json-languageserver/bin/vscode-json-languageserver`,
+    path.join(
+      __dirname,
+      'node_modules',
+      'vscode-json-languageserver',
+      'bin',
+      'vscode-json-languageserver'
+    ),
     '--stdio',
   ])
 
@@ -56,7 +71,8 @@ async function initializeLSPClient() {
   const client = new lspClient.LspClient(endpoint)
 
   core.debug('Initializing languageserver client')
-  const iDontReallyCare = await client.initialize({
+
+  await client.initialize({
     processId: process.pid,
     capabilities: {},
     client: 'jsonlinter-action',
@@ -68,8 +84,6 @@ async function initializeLSPClient() {
     ],
   })
 
-  core.debug(JSON.stringify(iDontReallyCare))
-
   core.debug('Languageserver client initialized.')
   return client
 }
@@ -77,8 +91,9 @@ async function initializeLSPClient() {
 async function lintFiles(filenames) {
   const client = await initializeLSPClient()
 
+  core.debug(`Start linting: ${filenames}`)
+
   let results = []
-  core.debug(`Iterating ${filenames}`)
   for (const filename of filenames) {
     core.debug(`Linting ${filename}...`)
     const contents = await fs.readFile(filename, 'utf8')
@@ -92,15 +107,23 @@ async function lintFiles(filenames) {
       },
     })
 
+    core.debug(
+      `Waiting languageserver client to respond with diagnostics for ${filename}.`
+    )
     const result = await client.once('textDocument/publishDiagnostics')
+
+    core.debug(`Languageserver client responded for ${filename}.`)
     results.concat(result)
 
     client.didClose({
       uri: filename,
     })
   }
+
+  core.debug('Creating annotations.')
   await createAnnotations(results)
 
+  core.debug('Shutting down languageserver.')
   client.shutdown()
   client.exit()
 }
