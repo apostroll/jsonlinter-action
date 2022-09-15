@@ -1,6 +1,5 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
-const exec = require('@actions/exec')
 const lspClient = require('ts-lsp-client')
 const child_process = require('child_process')
 const process = require('node:process')
@@ -11,14 +10,14 @@ async function createAnnotation(linterOutput) {
   const octokit = new github.getOctokit(token)
 
   if (linterOutput.diagnostics.length === 0) {
-    core.debug(`${filename} found no errors!`)
+    core.debug(`${diagnostic.uri} found no errors!`)
     return
   }
 
-  core.debug(`${filename} has: {linterOutput.diagnostics.length} errors!`)
+  core.debug(`${diagnostic.uri} has: {linterOutput.diagnostics.length} errors!`)
   for (diagnostic of linterOutput.diagnostics) {
     core.debug(
-      `${filename}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
+      `${diagnostic.uri}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
     )
     await octokit.rest.checks.create({
       owner: github.context.repo.owner,
