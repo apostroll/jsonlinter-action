@@ -39,8 +39,8 @@ async function createAnnotations(linterOutputs) {
       status: 'completed',
       conclusion: 'failure',
       output: {
-        title: diagnostic.message,
-        summary: diagnostic.message,
+        title: 'Error linting JSON files',
+        summary: '',
         annotations: annotations,
       },
     })
