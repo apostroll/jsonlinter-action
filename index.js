@@ -111,6 +111,10 @@ async function lintFiles(filenames) {
     })
   }
 
+  core.debug('Shutting down languageserver.')
+  client.shutdown()
+  client.exit()
+
   const annotations = createAnnotations(results)
 
   core.debug('Creating annotations.')
@@ -134,6 +138,7 @@ async function lintFiles(filenames) {
     core.setFailed(
       `${annotations.length} errors encountered while linting JSON files.`
     )
+    return false
   } else {
     await octokit.rest.checks.update({
       owner: github.context.repo.owner,
@@ -149,11 +154,9 @@ async function lintFiles(filenames) {
         annotations: annotations,
       },
     })
-  }
 
-  core.debug('Shutting down languageserver.')
-  client.shutdown()
-  client.exit()
+    return true
+  }
 }
 
 ;(async () => {
@@ -163,7 +166,7 @@ async function lintFiles(filenames) {
       .getInput('files')
       .split(',')
       .map((f) => f.trim())
-    await lintFiles(files)
+    return await lintFiles(files)
   } catch (error) {
     core.setFailed(error.message)
   }
