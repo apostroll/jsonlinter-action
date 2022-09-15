@@ -15,7 +15,7 @@ async function createAnnotation(linterOutput) {
   }
 
   core.debug(
-    `${linterOutput.uri} has: {linterOutput.diagnostics.length} errors!`
+    `${linterOutput.uri} has: ${linterOutput.diagnostics.length} errors!`
   )
   for (diagnostic of linterOutput.diagnostics) {
     core.debug(
@@ -44,8 +44,6 @@ async function createAnnotation(linterOutput) {
         ],
       },
     })
-
-    core.setFailed(`Errors encountered when linting: ${linterOutput.uri}`)
   }
 }
 
