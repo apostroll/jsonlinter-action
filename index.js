@@ -5,22 +5,26 @@ const child_process = require('child_process')
 const process = require('node:process')
 const fs = require('fs/promises')
 
-async function createAnnotation(linterOutput) {
+async function createAnnotations(linterOutputs) {
   const token = core.getInput('repo-token')
   const octokit = new github.getOctokit(token)
 
-  if (linterOutput.diagnostics.length === 0) {
-    core.debug(`${linterOutput.uri} found no errors!`)
-    return
+  annotations = []
+  for (const linterOutput of linterOutputs) {
+    for (const diagnostic of linterOutput.diagnostics) {
+      annotations.push({
+        path: linterOutput.uri,
+        start_line: diagnostic.range.start.line,
+        end_line: diagnostic.range.end.line,
+        message: diagnostic.message,
+        start_column: diagnostic.range.start.character,
+        annotation_level: 'notice',
+        end_column: diagnostic.range.end.character,
+      })
+    }
   }
 
-  core.debug(
-    `${linterOutput.uri} has: ${linterOutput.diagnostics.length} errors!`
-  )
-  for (diagnostic of linterOutput.diagnostics) {
-    core.debug(
-      `${linterOutput.uri}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
-    )
+  if (annotations.length) {
     await octokit.rest.checks.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
@@ -31,19 +35,10 @@ async function createAnnotation(linterOutput) {
       output: {
         title: diagnostic.message,
         summary: diagnostic.message,
-        annotations: [
-          {
-            path: linterOutput.uri,
-            start_line: diagnostic.range.start.line,
-            end_line: diagnostic.range.end.line,
-            message: diagnostic.message,
-            start_column: diagnostic.range.start.character,
-            annotation_level: 'notice',
-            end_column: diagnostic.range.end.character,
-          },
-        ],
+        annotations: annotations,
       },
     })
+    core.setFailed(`${annotations.length} errors encountered when linting`)
   }
 }
 
@@ -82,6 +77,7 @@ async function initializeLSPClient() {
 async function lintFiles(filenames) {
   const client = await initializeLSPClient()
 
+  let results = []
   core.debug(`Iterating ${filenames}`)
   for (const filename of filenames) {
     core.debug(`Linting ${filename}...`)
@@ -97,12 +93,13 @@ async function lintFiles(filenames) {
     })
 
     const result = await client.once('textDocument/publishDiagnostics')
-    await createAnnotation(result[0])
+    results.concat(result)
 
     client.didClose({
       uri: filename,
     })
   }
+  await createAnnotations(results)
 
   client.shutdown()
   client.exit()
