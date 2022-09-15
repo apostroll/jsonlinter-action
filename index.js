@@ -1,5 +1,6 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
+const exec = require('@actions/exec')
 const lspClient = require('ts-lsp-client')
 const child_process = require('child_process')
 const process = require('node:process')
@@ -10,13 +11,13 @@ async function createAnnotation(linterOutput) {
   const octokit = new github.getOctokit(token)
 
   if (linterOutput.diagnostics.length === 0) {
-    core.notice(`${filename} found no errors!`)
+    core.debug(`${filename} found no errors!`)
     return
   }
 
-  core.notice(`${filename} has: {linterOutput.diagnostics.length} errors!`)
+  core.debug(`${filename} has: {linterOutput.diagnostics.length} errors!`)
   for (diagnostic of linterOutput.diagnostics) {
-    core.notice(
+    core.debug(
       `${filename}: ${diagnostic.message} line: ${diagnostic.range.start.line}`
     )
     await octokit.rest.checks.create({
@@ -47,8 +48,8 @@ async function createAnnotation(linterOutput) {
 }
 
 async function initializeLSPClient() {
-  core.notice('Initializing vscode-json-languageserver')
-  const lspProcess = child_process.spawn('node', [
+  core.debug('Initializing vscode-json-languageserver')
+  const lspProcess = exec.exec('node', [
     'node_modules/vscode-json-languageserver/bin/vscode-json-languageserver',
     '--stdio',
   ])
@@ -59,7 +60,7 @@ async function initializeLSPClient() {
   )
   const client = new lspClient.LspClient(endpoint)
 
-  core.notice('Initializing languageserver client')
+  core.debug('Initializing languageserver client')
   const iDontReallyCare = await client.initialize({
     processId: process.pid,
     capabilities: {},
@@ -72,18 +73,18 @@ async function initializeLSPClient() {
     ],
   })
 
-  core.notice(JSON.stringify(iDontReallyCare))
+  core.debug(JSON.stringify(iDontReallyCare))
 
-  core.notice('Languageserver client initialized.')
+  core.debug('Languageserver client initialized.')
   return client
 }
 
 async function lintFiles(filenames) {
   const client = await initializeLSPClient()
 
-  core.notice(`Iterating ${filenames}`)
+  core.debug(`Iterating ${filenames}`)
   for (const filename of filenames) {
-    core.notice(`Linting ${filename}...`)
+    core.debug(`Linting ${filename}...`)
     const contents = await fs.readFile(filename, 'utf8')
 
     client.didOpen({
@@ -110,7 +111,6 @@ async function lintFiles(filenames) {
 ;(async () => {
   try {
     core.notice('Running jsonlinter-action')
-    core.notice(`Files found: ${core.getInput('files')}`)
     const files = core
       .getInput('files')
       .split(',')
