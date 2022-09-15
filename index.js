@@ -7,7 +7,7 @@ const path = require('node:path')
 const fs = require('fs/promises')
 
 function createAnnotations(linterOutputs) {
-  annotations = []
+  let annotations = []
   core.debug(linterOutputs)
   for (const linterOutput of linterOutputs) {
     core.debug(`Iterating errors returned for: ${linterOutput.uri}`)
@@ -15,7 +15,7 @@ function createAnnotations(linterOutputs) {
     for (const diagnostic of linterOutput.diagnostics) {
       core.debug(`${linterOutput.uri}: diagnostic: ${diagnostic}`)
 
-      annotations.push({
+      const annotation = {
         path: linterOutput.uri,
         start_line: diagnostic.range.start.line,
         end_line: diagnostic.range.end.line,
@@ -23,7 +23,10 @@ function createAnnotations(linterOutputs) {
         start_column: diagnostic.range.start.character,
         end_column: diagnostic.range.end.character,
         annotation_level: 'failure',
-      })
+      }
+
+      core.debug(`${linterOutput.uri}: annotation: ${annotation}`)
+      annotations.push(annotation)
     }
   }
 
@@ -105,7 +108,6 @@ async function lintFiles(filenames) {
   client.exit()
 
   const annotations = createAnnotations(results)
-
 
   if (annotations.length) {
     core.setFailed(
