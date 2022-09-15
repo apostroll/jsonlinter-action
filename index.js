@@ -70,12 +70,14 @@ async function initializeLSPClient() {
     ],
   })
 
+  core.notice('Languageserver client initialized.')
   return client
 }
 
 async function lintFiles(filenames) {
   const client = await initializeLSPClient()
 
+  core.notice(`Iterating ${filenames}`)
   for (const filename of filenames) {
     core.notice(`Linting ${filename}...`)
     const contents = await fs.readFile(filename, 'utf8')
