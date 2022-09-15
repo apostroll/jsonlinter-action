@@ -119,30 +119,15 @@ async function lintFiles(filenames) {
       status: 'completed',
       conclusion: 'failure',
       output: {
-        title: `${check.data.name}: output`,
+        title: 'jsonlinter-action: output',
         summary: `${annotations.length} annotations written.`,
         annotations: annotations,
-      },
+      }
     })
 
     core.setFailed(
       `${annotations.length} errors encountered while linting JSON files.`
     )
-  } else {
-    await octokit.rest.checks.update({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      check_run_id: check.data.id,
-      name: check.data.name,
-      head_sha: github.context.sha,
-      status: 'completed',
-      conclusion: 'success',
-      output: {
-        title: `${check.data.name}: output`,
-        summary: `${annotations.length} annotations written.`,
-        annotations: annotations,
-      },
-    })
   }
 }
 
