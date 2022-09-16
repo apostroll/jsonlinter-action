@@ -19,6 +19,7 @@ function createAnnotations(linterOutputs) {
         path: linterOutput.uri,
         start_line: diagnostic.range.start.line,
         end_line: diagnostic.range.end.line,
+        title: 'jsonlinter-action',
         message: diagnostic.message,
         start_column: diagnostic.range.start.character,
         end_column: diagnostic.range.end.character,
@@ -131,6 +132,8 @@ async function lintFiles(filenames) {
         annotations: annotations,
       },
     })
+
+	core.notice(JSON.stringify(check))
   }
 }
 
