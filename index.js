@@ -82,18 +82,11 @@ async function lintFiles(filenames) {
   const token = core.getInput('repo-token')
   const octokit = github.getOctokit(token)
 
+  const started_at = (new Date()).toISOString()
+
   const check = await octokit.rest.checks.create({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
-    name: 'jsonlinter-action',
-    head_sha: github.context.sha,
-    status: 'in_progress',
-    started_at: (new Date()).toGMTString(),
-    output: {
-      title: 'jsonlinter-action: output',
-      summary: '',
-      text: '',
-    },
   })
 
   core.debug(`Start linting: ${filenames}`)
@@ -145,7 +138,8 @@ async function lintFiles(filenames) {
       name: 'jsonlinter-action',
       head_sha: github.context.sha,
       status: 'completed',
-      completed_at: (new Date()).toGMTString(),
+      started_at: started_at,
+      completed_at: (new Date()).toISOString(),
       conclusion: 'failure',
       output: {
         title: 'jsonlinter-action: output',
