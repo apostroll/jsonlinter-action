@@ -13,7 +13,9 @@ function createAnnotations(linterOutputs) {
     core.debug(`Iterating errors returned for: ${linterOutput.uri}`)
 
     for (const diagnostic of linterOutput.diagnostics) {
-      core.debug(`${linterOutput.uri}: diagnostic: ${JSON.stringify(diagnostic)}`)
+      core.debug(
+        `${linterOutput.uri}: diagnostic: ${JSON.stringify(diagnostic)}`
+      )
 
       const annotation = {
         path: linterOutput.uri,
@@ -26,7 +28,9 @@ function createAnnotations(linterOutputs) {
         annotation_level: 'failure',
       }
 
-      core.debug(`${linterOutput.uri}: annotation: ${JSON.stringify(annotation)}`)
+      core.debug(
+        `${linterOutput.uri}: annotation: ${JSON.stringify(annotation)}`
+      )
       annotations.push(annotation)
     }
   }
@@ -75,6 +79,23 @@ async function initializeLSPClient() {
 async function lintFiles(filenames) {
   const client = await initializeLSPClient()
 
+  const token = core.getInput('repo-token')
+  const octokit = github.getOctokit(token)
+
+  const check = await octokit.rest.checks.create({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    name: 'jsonlinter-action',
+    head_sha: github.context.sha,
+    status: 'in_progress',
+    started_at: (new Date()).toGMTString(),
+    output: {
+      title: 'jsonlinter-action: output',
+      summary: '',
+      text: '',
+    },
+  })
+
   core.debug(`Start linting: ${filenames}`)
 
   let results = []
@@ -117,14 +138,14 @@ async function lintFiles(filenames) {
 
     core.debug('Creating annotations.')
 
-    const token = core.getInput('repo-token')
-    const octokit = github.getOctokit(token)
-    const check = await octokit.rest.checks.create({
+    await octokit.rest.checks.update({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
+      check_run_id: check.data.id,
       name: 'jsonlinter-action',
       head_sha: github.context.sha,
       status: 'completed',
+      completed_at: (new Date()).toGMTString(),
       conclusion: 'failure',
       output: {
         title: 'jsonlinter-action: output',
@@ -132,7 +153,6 @@ async function lintFiles(filenames) {
         annotations: annotations,
       },
     })
-
   }
 }
 
