@@ -81,12 +81,14 @@ async function lintFiles(filenames) {
 
   const token = core.getInput('repo-token')
   const octokit = github.getOctokit(token)
-
-  const started_at = (new Date()).toISOString()
+  const started_at = new Date().toISOString()
 
   const check = await octokit.rest.checks.create({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
+    name: 'jsonlinter-action',
+    head_sha: github.context.sha,
+    status: 'in_progress',
   })
 
   core.debug(`Start linting: ${filenames}`)
@@ -125,28 +127,28 @@ async function lintFiles(filenames) {
   const annotations = createAnnotations(results)
 
   if (annotations.length) {
-    core.setFailed(
-      `${annotations.length} errors encountered while linting JSON files.`
-    )
-
     core.debug('Creating annotations.')
 
     await octokit.rest.checks.update({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       check_run_id: check.data.id,
-      name: 'jsonlinter-action',
+      name: check.data.name,
       head_sha: github.context.sha,
       status: 'completed',
-      started_at: started_at,
-      completed_at: (new Date()).toISOString(),
       conclusion: 'failure',
+      started_at: started_at,
+      completed_at: new Date().toISOString(),
       output: {
         title: 'jsonlinter-action: output',
         summary: `${annotations.length} annotations written.`,
         annotations: annotations,
       },
     })
+
+    core.setFailed(
+      `${annotations.length} errors encountered while linting JSON files.`
+    )
   }
 }
 
