@@ -120,10 +120,6 @@ async function lintFiles(filenames) {
     core.debug('Creating annotations.')
 
     await fs.writeFile('annotations.json', JSON.stringify(annotations))
-
-    core.setFailed(
-      `${annotations.length} errors encountered while linting JSON files.`
-    )
   }
 }
 
