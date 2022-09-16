@@ -118,7 +118,7 @@ async function lintFiles(filenames) {
     core.debug('Creating annotations.')
 
     const token = core.getInput('repo-token')
-    const octokit = new github.getOctokit(token)
+    const octokit = github.getOctokit(token)
     const check = await octokit.rest.checks.create({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
@@ -133,7 +133,6 @@ async function lintFiles(filenames) {
       },
     })
 
-	core.notice(JSON.stringify(check))
   }
 }
 
