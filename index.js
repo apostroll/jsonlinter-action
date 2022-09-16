@@ -27,7 +27,7 @@ function createAnnotations(linterOutputs) {
           start: diagnostic.range.start.character,
           end: diagnostic.range.end.character,
         },
-        annotation_level: 'failure',
+        level: 'failure',
       }
 
       core.debug(
