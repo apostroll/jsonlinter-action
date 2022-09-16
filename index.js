@@ -1,5 +1,4 @@
 const core = require('@actions/core')
-const github = require('@actions/github')
 const lspClient = require('ts-lsp-client')
 const child_process = require('child_process')
 const process = require('node:process')
@@ -18,13 +17,16 @@ function createAnnotations(linterOutputs) {
       )
 
       const annotation = {
-        path: linterOutput.uri,
-        start_line: diagnostic.range.start.line,
-        end_line: diagnostic.range.end.line,
-        title: diagnostic.message,
         message: diagnostic.message,
-        start_column: diagnostic.range.start.character,
-        end_column: diagnostic.range.end.character,
+        path: linterOutput.uri,
+        line: {
+          start: diagnostic.range.start.line,
+          end: diagnostic.range.end.line,
+        },
+        column: {
+          start: diagnostic.range.start.character,
+          end: diagnostic.range.end.character,
+        },
         annotation_level: 'failure',
       }
 
@@ -79,18 +81,6 @@ async function initializeLSPClient() {
 async function lintFiles(filenames) {
   const client = await initializeLSPClient()
 
-  const token = core.getInput('repo-token')
-  const octokit = github.getOctokit(token)
-  const started_at = new Date().toISOString()
-
-  const check = await octokit.rest.checks.create({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    name: 'jsonlinter-action',
-    head_sha: github.context.sha,
-    status: 'in_progress',
-  })
-
   core.debug(`Start linting: ${filenames}`)
 
   let results = []
@@ -129,22 +119,7 @@ async function lintFiles(filenames) {
   if (annotations.length) {
     core.debug('Creating annotations.')
 
-    await octokit.rest.checks.update({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      check_run_id: check.data.id,
-      name: check.data.name,
-      head_sha: github.context.sha,
-      status: 'completed',
-      conclusion: 'failure',
-      started_at: started_at,
-      completed_at: new Date().toISOString(),
-      output: {
-        title: 'jsonlinter-action: output',
-        summary: `${annotations.length} annotations written.`,
-        annotations: annotations,
-      },
-    })
+    await fs.writeFile('annotations.json', JSON.stringify(annotations))
 
     core.setFailed(
       `${annotations.length} errors encountered while linting JSON files.`
