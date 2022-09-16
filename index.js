@@ -19,7 +19,7 @@ function createAnnotations(linterOutputs) {
         path: linterOutput.uri,
         start_line: diagnostic.range.start.line,
         end_line: diagnostic.range.end.line,
-        title: 'jsonlinter-action',
+        title: diagnostic.message,
         message: diagnostic.message,
         start_column: diagnostic.range.start.character,
         end_column: diagnostic.range.end.character,
